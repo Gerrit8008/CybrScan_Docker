@@ -1,0 +1,54 @@
+# Development Docker Compose configuration
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: cybrscan_dev
+    ports:
+      - "8000:8000"
+      - "5000:5000"  # Flask debug port
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - FLASK_APP=app.py
+      - SECRET_KEY=dev-secret-key-change-this
+      - MAIL_SERVER=mailhog
+      - MAIL_PORT=1025
+      - MAIL_USE_TLS=false
+      - MAIL_USERNAME=
+      - MAIL_PASSWORD=
+      - DEFAULT_FROM_EMAIL=dev@cybrscan.local
+    volumes:
+      - .:/app
+      - /app/__pycache__
+      - /app/.pytest_cache
+      - /app/venv
+    command: python app.py
+    networks:
+      - cybrscan_dev_network
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: cybrscan_mailhog
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    networks:
+      - cybrscan_dev_network
+
+  # No nginx in development
+  nginx:
+    profiles:
+      - donotstart
+
+  # No certbot in development  
+  certbot:
+    profiles:
+      - donotstart
+
+networks:
+  cybrscan_dev_network:
+    driver: bridge

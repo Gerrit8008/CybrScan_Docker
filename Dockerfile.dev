@@ -1,0 +1,37 @@
+# Development Dockerfile with hot reloading
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    default-libmysqlclient-dev \
+    pkg-config \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install development dependencies
+RUN pip install --no-cache-dir \
+    flask-debugtoolbar \
+    python-dotenv \
+    watchdog
+
+# Set development environment
+ENV FLASK_ENV=development \
+    FLASK_DEBUG=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# Create directories
+RUN mkdir -p static/uploads static/deployments database logs
+
+# Run as root in development for easier file access
+EXPOSE 8000
+
+# Use Flask development server with auto-reload
+CMD ["flask", "run", "--host=0.0.0.0", "--port=8000", "--reload"]
